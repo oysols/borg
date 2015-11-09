@@ -156,7 +156,7 @@ class Repository:
         """Commit transaction
         """
         self.io.write_commit()
-        self.compact_segments()
+        #self.compact_segments()
         self.write_index()
         self.rollback()
 
