@@ -226,6 +226,17 @@ class Repository:
         """
         if not self.compact:
             return
+
+        # only compact segments if there is enough data to fill a new segment file
+        new_segment_data_size = MAGIC_LEN
+        for segment in self.compact:
+            if self.io.segment_exists(segment):
+                for tag, key, offset, data in self.io.iter_objects(segment, include_data=True):
+                    if tag == TAG_PUT and self.index.get(key, (-1, -1)) == (segment, offset):
+                        new_segment_data_size += len(data) + LoggedIO.put_header_fmt.size
+        if new_segment_data_size < self.DEFAULT_MAX_SEGMENT_SIZE:
+            return
+
         index_transaction_id = self.get_index_transaction_id()
         segments = self.segments
         unused = []  # list of segments, that are not used anymore
